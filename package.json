@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "End-to-End MERN Stack E-Commerce Platform with RapidMiner Recommendation Engine and JWT Security",
   "scripts": {
+    "build": "cd ecommerce-frontend && npm install && npm run build",
     "install:all": "cd ecommerce-backend && npm install && cd ../ecommerce-frontend && npm install",
     "seed": "cd ecommerce-backend && npm run seed",
     "server": "cd ecommerce-backend && npm run dev",

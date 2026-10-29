@@ -27,8 +27,18 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Ensure DB connected on each request (crucial for serverless environments)
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('Database connection error in request', err);
+  }
+  next();
+});
+
 // Health / Welcome Route
-app.get('/', (req, res) => {
+app.get(['/', '/api'], (req, res) => {
   res.json({
     status: 'online',
     message: 'MERN Stack E-Commerce Platform API is running',
@@ -56,16 +66,18 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`[Server] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+if (!process.env.VERCEL) {
+  const server = app.listen(PORT, () => {
+    console.log(`[Server] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
 
-server.on('error', (error) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`[Server Error] Port ${PORT} is already in use.`);
-  } else {
-    console.error(`[Server Error] ${error.message}`);
-  }
-});
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`[Server Error] Port ${PORT} is already in use.`);
+    } else {
+      console.error(`[Server Error] ${error.message}`);
+    }
+  });
+}
 
-module.exports = { app, server };
+module.exports = app;
