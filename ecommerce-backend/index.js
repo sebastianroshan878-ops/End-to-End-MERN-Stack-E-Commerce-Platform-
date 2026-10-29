@@ -60,4 +60,12 @@ const server = app.listen(PORT, () => {
   console.log(`[Server] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
 
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`[Server Error] Port ${PORT} is already in use.`);
+  } else {
+    console.error(`[Server Error] ${error.message}`);
+  }
+});
+
 module.exports = { app, server };
