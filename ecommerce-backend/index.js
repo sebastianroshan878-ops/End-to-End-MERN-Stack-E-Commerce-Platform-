@@ -1,0 +1,63 @@
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const connectDB = require('./config/dbConnection');
+const { notFound, errorHandler } = require('./middleware/errorHandler');
+
+// Route imports
+const authenticationRoutes = require('./routes/authenticationRoutes');
+const userProfileRoutes = require('./routes/userProfileRoutes');
+const productRoutes = require('./routes/productRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+
+// Load environment variables
+dotenv.config();
+
+// Connect to MongoDB
+connectDB();
+
+const app = express();
+
+// Middleware
+app.use(cors({
+  origin: '*', // Allow all origins for dev / flexible deployment
+  credentials: true,
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Health / Welcome Route
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'MERN Stack E-Commerce Platform API is running',
+    version: '1.0.0',
+    documentation: {
+      auth: '/api/auth',
+      users: '/api/users',
+      products: '/api/products',
+      orders: '/api/orders',
+      analytics: '/api/analytics',
+    },
+  });
+});
+
+// API Routes Mounting
+app.use('/api/auth', authenticationRoutes);
+app.use('/api/users', userProfileRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
+// Error Handling Middleware
+app.use(notFound);
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+
+const server = app.listen(PORT, () => {
+  console.log(`[Server] Running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+});
+
+module.exports = { app, server };

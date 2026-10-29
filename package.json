@@ -1,0 +1,26 @@
+{
+  "name": "mern-ecommerce-rapidminer-platform",
+  "version": "1.0.0",
+  "description": "End-to-End MERN Stack E-Commerce Platform with RapidMiner Recommendation Engine and JWT Security",
+  "scripts": {
+    "install:all": "cd ecommerce-backend && npm install && cd ../ecommerce-frontend && npm install",
+    "seed": "cd ecommerce-backend && npm run seed",
+    "server": "cd ecommerce-backend && npm run dev",
+    "client": "cd ecommerce-frontend && npm run dev",
+    "build:client": "cd ecommerce-frontend && npm run build"
+  },
+  "keywords": [
+    "mern",
+    "ecommerce",
+    "rapidminer",
+    "react",
+    "redux-toolkit",
+    "nodejs",
+    "express",
+    "mongodb",
+    "jwt",
+    "rest-api"
+  ],
+  "author": "Sebastian Roshan",
+  "license": "MIT"
+}
