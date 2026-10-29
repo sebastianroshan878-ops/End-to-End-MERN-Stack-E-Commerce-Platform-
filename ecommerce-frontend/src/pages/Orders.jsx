@@ -11,6 +11,7 @@ import {
   FaCalendarAlt,
 } from 'react-icons/fa';
 import { getMyOrdersThunk } from '../redux/thunks/orderThunks';
+import { formatINR, FALLBACK_PRODUCT_IMAGE } from '../utils/formatCurrency';
 
 const Orders = () => {
   const dispatch = useDispatch();
@@ -116,7 +117,7 @@ const Orders = () => {
                   </div>
 
                   <div style={{ fontSize: '1.15rem', fontWeight: '700', color: '#fff' }}>
-                    ${order.totalPrice.toFixed(2)}
+                    {formatINR(order.totalPrice)}
                   </div>
                 </div>
               </div>
@@ -129,6 +130,10 @@ const Orders = () => {
                       <img
                         src={item.image}
                         alt={item.name}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                        }}
                         style={{
                           width: '56px',
                           height: '56px',
@@ -143,13 +148,13 @@ const Orders = () => {
                           {item.name}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          Qty: {item.qty} × ${item.price.toFixed(2)}
+                          Qty: {item.qty} × {formatINR(item.price)}
                         </div>
                       </div>
                     </div>
 
                     <div style={{ fontSize: '0.95rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-                      ${(item.qty * item.price).toFixed(2)}
+                      {formatINR(item.qty * item.price)}
                     </div>
                   </div>
                 ))}

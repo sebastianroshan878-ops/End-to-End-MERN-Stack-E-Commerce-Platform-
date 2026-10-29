@@ -42,7 +42,7 @@ const Home = () => {
   useEffect(() => {
     const params = {
       page: currentPage,
-      limit: 8,
+      limit: 12,
       sortBy,
     };
     if (keyword.trim()) params.keyword = keyword.trim();

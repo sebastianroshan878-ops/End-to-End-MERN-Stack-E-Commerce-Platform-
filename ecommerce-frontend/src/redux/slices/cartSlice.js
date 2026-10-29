@@ -21,13 +21,15 @@ const getInitialShippingAddress = () => {
   }
 };
 
-// Calculation helpers
+// Calculation helpers in Indian Rupees (INR)
 const calculatePrices = (items) => {
   const itemsPrice = Number(
     items.reduce((acc, item) => acc + item.price * item.qty, 0).toFixed(2)
   );
-  const shippingPrice = itemsPrice > 100 || itemsPrice === 0 ? 0 : 15;
-  const taxPrice = Number((0.1 * itemsPrice).toFixed(2));
+  // Free delivery on orders ₹999 and above, otherwise ₹99 delivery fee
+  const shippingPrice = itemsPrice >= 999 || itemsPrice === 0 ? 0 : 99;
+  // 18% Standard GST
+  const taxPrice = Number((0.18 * itemsPrice).toFixed(2));
   const totalPrice = Number((itemsPrice + shippingPrice + taxPrice).toFixed(2));
 
   return { itemsPrice, shippingPrice, taxPrice, totalPrice };

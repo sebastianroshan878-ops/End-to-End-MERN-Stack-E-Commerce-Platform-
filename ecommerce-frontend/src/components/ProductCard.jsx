@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { FaStar, FaShoppingCart, FaCheck, FaBrain } from 'react-icons/fa';
 import { addItem } from '../redux/slices/cartSlice';
+import { formatINR, FALLBACK_PRODUCT_IMAGE } from '../utils/formatCurrency';
 
 const ProductCard = ({ product, isAiRecommended = false }) => {
   const dispatch = useDispatch();
@@ -83,6 +84,10 @@ const ProductCard = ({ product, isAiRecommended = false }) => {
           src={product.image}
           alt={product.name}
           loading="lazy"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+          }}
           style={{
             width: '100%',
             height: '100%',
@@ -153,7 +158,7 @@ const ProductCard = ({ product, isAiRecommended = false }) => {
               Price
             </span>
             <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff' }}>
-              ${product.price.toFixed(2)}
+              {formatINR(product.price)}
             </span>
           </div>
 

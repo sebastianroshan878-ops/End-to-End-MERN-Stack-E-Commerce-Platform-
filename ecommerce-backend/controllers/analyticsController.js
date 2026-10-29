@@ -60,13 +60,13 @@ const RAPIDMINER_ASSOCIATION_RULES = [
   },
   {
     ruleId: 'RM-RULE-006',
-    antecedentKeywords: ['shoes', 'sneakers', 'running'],
-    consequentKeywords: ['socks', 'insole', 'gym bag', 'water bottle'],
-    categoryMatch: ['Footwear', 'Fitness'],
-    confidence: 0.76,
-    lift: 1.68,
-    support: 0.14,
-    rationale: 'Sports apparel cross-sells strongly with functional fitness gear',
+    antecedentKeywords: ['shoes', 'sneakers', 'running', 'ultraboost'],
+    consequentKeywords: ['backpack', 'watch', 'earbuds', 'socks'],
+    categoryMatch: ['Footwear', 'Accessories', 'Wearables'],
+    confidence: 0.78,
+    lift: 1.88,
+    support: 0.16,
+    rationale: 'Athletic footwear purchases cross-sell strongly with wearable tech and training backpacks',
   },
 ];
 

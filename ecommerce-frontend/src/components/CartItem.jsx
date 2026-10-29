@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
 import { updateQuantity, removeItem } from '../redux/slices/cartSlice';
+import { formatINR, FALLBACK_PRODUCT_IMAGE } from '../utils/formatCurrency';
 
 const CartItem = ({ item }) => {
   const dispatch = useDispatch();
@@ -42,6 +43,10 @@ const CartItem = ({ item }) => {
         <img
           src={item.image}
           alt={item.name}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+          }}
           style={{
             width: '74px',
             height: '74px',
@@ -67,7 +72,7 @@ const CartItem = ({ item }) => {
             </h4>
           </Link>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            ${item.price.toFixed(2)} each
+            {formatINR(item.price)} each
           </div>
         </div>
       </div>
@@ -128,7 +133,7 @@ const CartItem = ({ item }) => {
       {/* Item Line Total */}
       <div style={{ minWidth: '85px', textAlign: 'right' }}>
         <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#fff' }}>
-          ${(item.price * item.qty).toFixed(2)}
+          {formatINR(item.price * item.qty)}
         </div>
       </div>
 

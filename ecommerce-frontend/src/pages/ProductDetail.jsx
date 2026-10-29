@@ -17,6 +17,7 @@ import {
 } from '../redux/thunks/productThunks';
 import { addItem } from '../redux/slices/cartSlice';
 import ProductCard from '../components/ProductCard';
+import { formatINR, FALLBACK_PRODUCT_IMAGE } from '../utils/formatCurrency';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -112,6 +113,10 @@ const ProductDetail = () => {
           <img
             src={product.image}
             alt={product.name}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+            }}
             style={{
               width: '100%',
               maxHeight: '460px',
@@ -159,7 +164,7 @@ const ProductDetail = () => {
             borderBottom: '1px solid var(--border-color)',
           }}>
             <span style={{ fontSize: '2.4rem', fontWeight: '800', color: '#fff' }}>
-              ${product.price.toFixed(2)}
+              {formatINR(product.price)}
             </span>
             <span className={`badge ${product.stock > 0 ? 'badge-success' : 'badge-warning'}`}>
               <FaBox size={10} /> {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}

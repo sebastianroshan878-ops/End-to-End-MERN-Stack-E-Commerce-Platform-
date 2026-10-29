@@ -11,6 +11,7 @@ import {
 import CartItem from '../components/CartItem';
 import { saveShippingAddress } from '../redux/slices/cartSlice';
 import { createOrderThunk } from '../redux/thunks/orderThunks';
+import { formatINR } from '../utils/formatCurrency';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -154,9 +155,9 @@ const Cart = () => {
           }}>
             <FaTruck color="var(--accent-primary)" size={18} />
             <span>
-              {itemsPrice >= 100
+              {itemsPrice >= 999
                 ? '🎉 Congratulations! You have unlocked Free Express Shipping.'
-                : `Add $${(100 - itemsPrice).toFixed(2)} more to qualify for Free Shipping.`}
+                : `Add ${formatINR(999 - itemsPrice)} more to qualify for Free Shipping.`}
             </span>
           </div>
         </div>
@@ -170,17 +171,17 @@ const Cart = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.5rem', fontSize: '0.95rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
               <span>Items Subtotal:</span>
-              <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>${itemsPrice.toFixed(2)}</span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{formatINR(itemsPrice)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
               <span>Estimated Shipping:</span>
               <span style={{ color: shippingPrice === 0 ? 'var(--accent-emerald)' : 'var(--text-primary)', fontWeight: '600' }}>
-                {shippingPrice === 0 ? 'FREE' : `$${shippingPrice.toFixed(2)}`}
+                {shippingPrice === 0 ? 'FREE' : formatINR(shippingPrice)}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-              <span>Estimated GST / Tax (10%):</span>
-              <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>${taxPrice.toFixed(2)}</span>
+              <span>Estimated GST (18%):</span>
+              <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{formatINR(taxPrice)}</span>
             </div>
             <div style={{
               display: 'flex',
@@ -191,7 +192,7 @@ const Cart = () => {
               fontWeight: '700',
             }}>
               <span>Total Price:</span>
-              <span style={{ color: '#fff' }}>${totalPrice.toFixed(2)}</span>
+              <span style={{ color: '#fff' }}>{formatINR(totalPrice)}</span>
             </div>
           </div>
 
