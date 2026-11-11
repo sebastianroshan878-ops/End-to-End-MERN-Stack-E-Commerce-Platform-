@@ -38,7 +38,7 @@ app.use(async (req, res, next) => {
 });
 
 // Health / Welcome Route
-app.get(['/', '/api'], (req, res) => {
+app.get(['/', '/api', '/health', '/api/health'], (req, res) => {
   res.json({
     status: 'online',
     message: 'MERN Stack E-Commerce Platform API is running',
@@ -53,12 +53,12 @@ app.get(['/', '/api'], (req, res) => {
   });
 });
 
-// API Routes Mounting
-app.use('/api/auth', authenticationRoutes);
-app.use('/api/users', userProfileRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/analytics', analyticsRoutes);
+// API Routes Mounting (supports both /api/* and /* when Vercel serverless strips prefix)
+app.use(['/api/auth', '/auth'], authenticationRoutes);
+app.use(['/api/users', '/users'], userProfileRoutes);
+app.use(['/api/products', '/products'], productRoutes);
+app.use(['/api/orders', '/orders'], orderRoutes);
+app.use(['/api/analytics', '/analytics'], analyticsRoutes);
 
 // Error Handling Middleware
 app.use(notFound);
