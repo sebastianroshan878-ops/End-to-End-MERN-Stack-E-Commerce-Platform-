@@ -29,13 +29,26 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle common errors
+// Response interceptor to handle common errors and guard against HTML rewrite responses
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If the server returned HTML (e.g., SPA index.html fallback from a misconfigured API route)
+    const contentType = response.headers['content-type'] || '';
+    if (
+      contentType.includes('text/html') ||
+      (typeof response.data === 'string' && response.data.trim().startsWith('<!DOCTYPE'))
+    ) {
+      const err = new Error(
+        'Backend API returned HTML instead of JSON. Ensure the server API is deployed and reachable at ' +
+          API_BASE_URL
+      );
+      return Promise.reject(err);
+    }
+    return response;
+  },
   (error) => {
     if (error.response && error.response.status === 401) {
       // Clear expired auth session if needed
-      // Note: Do not auto-reload if already on login page
       if (!window.location.pathname.includes('/login')) {
         console.warn('Session expired or unauthorized. Please log in.');
       }

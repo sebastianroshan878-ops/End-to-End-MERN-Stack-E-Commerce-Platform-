@@ -7,6 +7,9 @@ export const fetchProductsThunk = createAsyncThunk(
   async (params = {}, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get('/products', { params });
+      if (!response.data || typeof response.data !== 'object' || !Array.isArray(response.data.data)) {
+        return rejectWithValue('Received invalid product response from server');
+      }
       return response.data;
     } catch (error) {
       const message =

@@ -307,8 +307,28 @@ const Home = () => {
               Loading products catalog...
             </div>
           ) : error ? (
-            <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--accent-rose)' }}>
-              Failed to load products: {error}
+            <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+              <h3 style={{ color: 'var(--accent-rose)' }}>Failed to load products</h3>
+              <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                {error}
+              </p>
+              <button
+                onClick={() => {
+                  dispatch(
+                    fetchProductsThunk({
+                      page: currentPage,
+                      limit: 12,
+                      sortBy,
+                      ...(keyword.trim() ? { keyword: keyword.trim() } : {}),
+                      ...(selectedCategory !== 'All' ? { category: selectedCategory } : {}),
+                    })
+                  );
+                }}
+                className="btn btn-primary btn-sm"
+                style={{ marginTop: '1.25rem' }}
+              >
+                Retry
+              </button>
             </div>
           ) : products.length === 0 ? (
             <div className="glass-panel" style={{ textAlign: 'center', padding: '4rem 2rem' }}>

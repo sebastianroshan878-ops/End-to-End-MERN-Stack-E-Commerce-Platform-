@@ -1,4 +1,69 @@
+const mongoose = require('mongoose');
 const Product = require('../models/product');
+const seedProducts = require('../data/seedProducts');
+const { autoSeedIfEmpty } = require('../utils/autoSeeder');
+
+// Helper: Filter and sort seedProducts in memory as a resilient fallback
+const filterInMemoryProducts = (items, query) => {
+  let filtered = [...items];
+
+  // 1. Keyword search (Name, Description, Brand)
+  if (query.keyword) {
+    const kw = query.keyword.toLowerCase().trim();
+    filtered = filtered.filter(
+      (p) =>
+        (p.name && p.name.toLowerCase().includes(kw)) ||
+        (p.description && p.description.toLowerCase().includes(kw)) ||
+        (p.brand && p.brand.toLowerCase().includes(kw))
+    );
+  }
+
+  // 2. Category filter
+  if (query.category && query.category !== 'All') {
+    filtered = filtered.filter((p) => p.category === query.category);
+  }
+
+  // 3. Price range filter
+  if (query.minPrice) {
+    filtered = filtered.filter((p) => p.price >= Number(query.minPrice));
+  }
+  if (query.maxPrice) {
+    filtered = filtered.filter((p) => p.price <= Number(query.maxPrice));
+  }
+
+  // 4. In-stock filter
+  if (query.inStock === 'true') {
+    filtered = filtered.filter((p) => p.stock > 0);
+  }
+
+  // 5. Featured filter
+  if (query.featured === 'true') {
+    filtered = filtered.filter((p) => Boolean(p.featured));
+  }
+
+  // 6. Sorting
+  if (query.sortBy) {
+    switch (query.sortBy) {
+      case 'price-asc':
+        filtered.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        filtered.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating-desc':
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case 'oldest':
+        // Keep order
+        break;
+      default:
+        // Newest / default
+        break;
+    }
+  }
+
+  return filtered;
+};
 
 // @desc    Fetch all products with filtering, search, sorting & pagination
 // @route   GET /api/products
@@ -9,74 +74,98 @@ const getProducts = async (req, res, next) => {
     const limit = Number(req.query.limit) || 12;
     const skip = (page - 1) * limit;
 
-    // Build filter query
-    const filter = {};
+    // Check if database is active
+    const isDbConnected = mongoose.connection.readyState === 1;
 
-    // 1. Keyword search (Name, Description, Brand)
-    if (req.query.keyword) {
-      filter.$or = [
-        { name: { $regex: req.query.keyword, $options: 'i' } },
-        { description: { $regex: req.query.keyword, $options: 'i' } },
-        { brand: { $regex: req.query.keyword, $options: 'i' } },
-      ];
-    }
+    if (isDbConnected) {
+      try {
+        const count = await Product.countDocuments();
+        if (count === 0) {
+          // Empty DB on cloud / Atlas: auto-seed catalog
+          await autoSeedIfEmpty();
+        }
 
-    // 2. Category filter
-    if (req.query.category && req.query.category !== 'All') {
-      filter.category = req.query.category;
-    }
+        // Build DB filter query
+        const filter = {};
 
-    // 3. Price range filter
-    if (req.query.minPrice || req.query.maxPrice) {
-      filter.price = {};
-      if (req.query.minPrice) filter.price.$gte = Number(req.query.minPrice);
-      if (req.query.maxPrice) filter.price.$lte = Number(req.query.maxPrice);
-    }
+        if (req.query.keyword) {
+          filter.$or = [
+            { name: { $regex: req.query.keyword, $options: 'i' } },
+            { description: { $regex: req.query.keyword, $options: 'i' } },
+            { brand: { $regex: req.query.keyword, $options: 'i' } },
+          ];
+        }
 
-    // 4. In-stock filter
-    if (req.query.inStock === 'true') {
-      filter.stock = { $gt: 0 };
-    }
+        if (req.query.category && req.query.category !== 'All') {
+          filter.category = req.query.category;
+        }
 
-    // 5. Featured filter
-    if (req.query.featured === 'true') {
-      filter.featured = true;
-    }
+        if (req.query.minPrice || req.query.maxPrice) {
+          filter.price = {};
+          if (req.query.minPrice) filter.price.$gte = Number(req.query.minPrice);
+          if (req.query.maxPrice) filter.price.$lte = Number(req.query.maxPrice);
+        }
 
-    // Sorting
-    let sort = { createdAt: -1 }; // Default: Newest first
-    if (req.query.sortBy) {
-      switch (req.query.sortBy) {
-        case 'price-asc':
-          sort = { price: 1 };
-          break;
-        case 'price-desc':
-          sort = { price: -1 };
-          break;
-        case 'rating-desc':
-          sort = { rating: -1 };
-          break;
-        case 'oldest':
-          sort = { createdAt: 1 };
-          break;
-        default:
-          sort = { createdAt: -1 };
+        if (req.query.inStock === 'true') {
+          filter.stock = { $gt: 0 };
+        }
+
+        if (req.query.featured === 'true') {
+          filter.featured = true;
+        }
+
+        let sort = { createdAt: -1 };
+        if (req.query.sortBy) {
+          switch (req.query.sortBy) {
+            case 'price-asc':
+              sort = { price: 1 };
+              break;
+            case 'price-desc':
+              sort = { price: -1 };
+              break;
+            case 'rating-desc':
+              sort = { rating: -1 };
+              break;
+            case 'oldest':
+              sort = { createdAt: 1 };
+              break;
+            default:
+              sort = { createdAt: -1 };
+          }
+        }
+
+        const totalCount = await Product.countDocuments(filter);
+        const products = await Product.find(filter)
+          .sort(sort)
+          .skip(skip)
+          .limit(limit);
+
+        if (totalCount > 0 || Object.keys(filter).length > 0) {
+          return res.json({
+            success: true,
+            count: products.length,
+            totalCount,
+            page,
+            pages: Math.ceil(totalCount / limit) || 1,
+            data: products,
+          });
+        }
+      } catch (dbErr) {
+        console.warn('[ProductController] DB query failed, falling back to seed products:', dbErr.message);
       }
     }
 
-    const totalCount = await Product.countDocuments(filter);
-    const products = await Product.find(filter)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit);
+    // Resilient Fallback: Database down, empty, or unseeded
+    const filtered = filterInMemoryProducts(seedProducts, req.query);
+    const paginated = filtered.slice(skip, skip + limit);
 
-    res.json({
+    return res.json({
       success: true,
-      count: products.length,
-      totalCount,
+      count: paginated.length,
+      totalCount: filtered.length,
       page,
-      pages: Math.ceil(totalCount / limit) || 1,
-      data: products,
+      pages: Math.ceil(filtered.length / limit) || 1,
+      data: paginated,
     });
   } catch (error) {
     next(error);
@@ -88,18 +177,39 @@ const getProducts = async (req, res, next) => {
 // @access  Public
 const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const isDbConnected = mongoose.connection.readyState === 1;
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: 'Product not found',
+    if (isDbConnected) {
+      try {
+        if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+          const product = await Product.findById(req.params.id);
+          if (product) {
+            return res.json({
+              success: true,
+              data: product,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('[ProductController] DB lookup error:', err.message);
+      }
+    }
+
+    // Fallback: In-memory lookup
+    const fallbackProduct = seedProducts.find(
+      (p) => String(p._id) === String(req.params.id) || p.name.toLowerCase() === req.params.id.toLowerCase()
+    );
+
+    if (fallbackProduct) {
+      return res.json({
+        success: true,
+        data: fallbackProduct,
       });
     }
 
-    res.json({
-      success: true,
-      data: product,
+    return res.status(404).json({
+      success: false,
+      message: 'Product not found',
     });
   } catch (error) {
     next(error);
@@ -235,7 +345,22 @@ const deleteProduct = async (req, res, next) => {
 // @access  Public
 const getCategories = async (req, res, next) => {
   try {
-    const categories = await Product.distinct('category');
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const categories = await Product.distinct('category');
+        if (categories && categories.length > 0) {
+          return res.json({
+            success: true,
+            data: categories,
+          });
+        }
+      } catch (err) {
+        console.warn('[ProductController] DB categories lookup error:', err.message);
+      }
+    }
+
+    // Fallback: Extract categories from seedProducts
+    const categories = Array.from(new Set(seedProducts.map((p) => p.category)));
     res.json({
       success: true,
       data: categories,
@@ -250,7 +375,25 @@ const getCategories = async (req, res, next) => {
 // @access  Public
 const getTopRatedProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({}).sort({ rating: -1, numReviews: -1 }).limit(6);
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const products = await Product.find({}).sort({ rating: -1, numReviews: -1 }).limit(6);
+        if (products && products.length > 0) {
+          return res.json({
+            success: true,
+            data: products,
+          });
+        }
+      } catch (err) {
+        console.warn('[ProductController] DB top rated error:', err.message);
+      }
+    }
+
+    // Fallback: Top rated from seedProducts
+    const products = [...seedProducts]
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 6);
+
     res.json({
       success: true,
       data: products,
